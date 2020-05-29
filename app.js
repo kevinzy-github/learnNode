@@ -31,9 +31,27 @@ const getPostData = (req) => {
 
 const serverHandle = (req,res) =>{
     res.setHeader('Content-type','application/json');
+
+    // 获取 path
     const url  = req.url; 
     req.path = url.split('?')[0];
+
+    // 解析 query
     req.query = querystring.parse(url.split('?')[1]);
+
+    // 解析 cookie
+    req.cookie = {};
+    const cookieStr = req.headers.cookie || '';
+    cookieStr.split(';').forEach(item => {
+        if (!item){
+            return;
+        }
+        const arr = item.split('=');
+        const key = arr[0];
+        const val = arr[1];
+        req.cookie[key] = val;
+        console.log('req.cookie is',req.cookie)
+    })
 
 
     getPostData(req).then(postData=>{
@@ -54,9 +72,19 @@ const serverHandle = (req,res) =>{
         }
 
         // 处理 user路由
-        const userData = handleUserRouter(req,res);
-        if (userData) {
-            res.end(JSON.stringify(userData))
+        // const userData = handleUserRouter(req,res);
+        // if (userData) {
+        //     res.end(JSON.stringify(userData))
+        //     return;
+        // }
+
+        const userResult = handleUserRouter(req,res)
+        if(userResult){
+            userResult.then(userData => {
+                res.end(
+                    JSON.stringify(userData)
+                )
+            })
             return;
         }
     
